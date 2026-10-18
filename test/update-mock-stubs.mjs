@@ -14,10 +14,11 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const mockDir = path.join(here, 'mock', '@minecraft');
+const mockDir = path.join(here, '..', 'src', 'harness', 'mock', '@minecraft');
 
 // module -> version (latest stable/beta at time of writing)
 const MODULES = {
+  '@minecraft/server': '2.10.0',
   '@minecraft/common': '1.3.0',
   '@minecraft/debug-utilities': '1.0.0-beta.1.20.70-preview.20',
   '@minecraft/diagnostics': '1.0.0-beta.1.21.70-preview.22',
@@ -27,6 +28,24 @@ const MODULES = {
   '@minecraft/server-graphics': '1.0.0',
   '@minecraft/server-net': '1.0.0-beta.11940b24',
 };
+
+// Names implemented functionally in mock/@minecraft/server.mjs — excluded from
+// the generated extras (local exports shadow star re-exports anyway, but we
+// keep the extras file clean).
+const SERVER_FUNCTIONAL = new Set(['world', 'system', 'Entity', 'Dimension', 'Block', 'TicksPerSecond', 'GameMode']);
+
+function writeServerExtras(names, dtsPath) {
+  const extras = [...names].filter((n) => !SERVER_FUNCTIONAL.has(n)).sort();
+  const header =
+    `/**\n * Generated permissive exports for @minecraft/server (see test/update-mock-stubs.mjs).\n` +
+    ` * The functional surface (world, system, Entity, Dimension, Block, ...) lives in\n` +
+    ` * server.mjs; every OTHER runtime export of the real module is bound here to a\n` +
+    ` * permissive value so real-world scripts' named imports link under the harness.\n` +
+    ` * NOT a behavioral model of the engine module.\n */\n` +
+    `import { permissive } from '../permissive.mjs';\n\n`;
+  const body = extras.map((n) => `export const ${n} = permissive('server.${n}');`).join('\n');
+  fs.writeFileSync(path.join(mockDir, 'server-extras.mjs'), header + body + '\n');
+}
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mc-stub-gen-'));
 for (const [name, version] of Object.entries(MODULES)) {
@@ -49,6 +68,12 @@ for (const [name, version] of Object.entries(MODULES)) {
       if (/^[A-Za-z0-9_$]+$/.test(n)) names.add(n);
     }
   }
+  if (name === '@minecraft/server') {
+    // server.mjs implements these functionally; everything else is permissive.
+    writeServerExtras(names, dtsPath);
+    console.log(`@minecraft/server: ${names.size} runtime exports -> mock/@minecraft/server-extras.mjs (functional names excluded)`);
+    continue;
+  }
 
   const short = name.replace('@minecraft/', '').replace(/\//g, '-');
   const header =
@@ -63,3 +88,4 @@ for (const [name, version] of Object.entries(MODULES)) {
   console.log(`${name}: ${names.size} runtime exports -> mock/@minecraft/${short}.mjs`);
 }
 fs.rmSync(tmp, { recursive: true, force: true });
+

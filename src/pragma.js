@@ -75,7 +75,7 @@ export class PragmaInfo {
    * start line only; callers walk ancestors.
    */
   disabledAt(node) {
-    if (!node.loc) return null;
+    if (!node || !node.loc) return null;
     const start = node.loc.start.line;
     const direct = this.info.disableByLine.get(start);
     if (direct) return direct;

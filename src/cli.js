@@ -1,9 +1,10 @@
-/**
+﻿/**
  * optipack CLI.
  *
  *   optipack <inputPackDir> <outputPackDir> [options]
+ *   optipack bench <inputPackDir> [options]
  *
- * Exit codes: 0 success · 1 usage/config error · 2 parse failure · 3 internal error
+ * Exit codes: 0 success Â· 1 usage/config error Â· 2 parse failure Â· 3 internal error
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,47 +15,31 @@ import { runPack, ParseFailureError, InternalError } from './pipeline.js';
 import { PASS_IDS, PASS_CODES } from './passes/index.js';
 import { unifiedDiff } from './diff.js';
 
-export async function main(argv) {
-  const program = new Command();
-  program
-    .name('optipack')
-    .description('QuickJS-targeted micro-optimizing pre-processor for Minecraft Bedrock behavior-pack scripts')
-    .version('1.0.0')
-    .argument('<inputPackDir>', 'behavior pack directory to read')
-    .argument('<outputPackDir>', 'directory to write the optimized pack into')
-    .option('--level <level>', 'optimization level: safe | balanced | risky')
-    .option('--config <path>', 'config file (default: ./optipack.config.json when present)')
-    .option('--only <ids>', 'comma-separated transform ids to run exclusively')
-    .option('--except <ids>', 'comma-separated transform ids to skip')
-    .option('--dry-run', 'analyze + report, write nothing (prints report to stdout unless --report is given)')
-    .option('--diff', 'print unified diffs per changed file')
-    .option('--report <path>', `report file (default: <outputPackDir>/optipack-report.json)`)
-    .option('--lint <bool>', 'enable/disable the lint pass (true|false)', parseBoolOpt)
-    .exitOverride();
+function parseBoolOpt(v) {
+  if (v === 'true' || v === '' || v === undefined) return true;
+  if (v === 'false') return false;
+  // Signal an invalid value; validated by the caller.
+  return v;
+}
 
-  let opts;
-  const args = [];
+function parseOptInt(v) {
+  const n = Number.parseInt(v, 10);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+async function runOptimize(inputDir, outputDir, opts) {
   try {
-    program.parse(argv, { from: 'node' });
-    opts = program.opts();
-    args.push(...program.args);
+    const exit = await runOptimizeInner(inputDir, outputDir, opts);
+    process.exitCode = exit;
+    return exit;
   } catch (e) {
-    if (e && e.code === 'commander.version') {
-      console.log(e.message);
-      return 0;
-    }
-    if (e && (e.code === 'commander.help' || e.code === 'commander.helpDisplayed')) {
-      return 0;
-    }
-    if (e && e.code === 'commander.missingArgument') {
-      console.error(`optipack: ${e.message}`);
-      return 1;
-    }
-    console.error(`optipack: ${e && e.message ? e.message : String(e)}`);
-    return 1;
+    process.exitCode = 3;
+    console.error(`optipack: internal error â€” ${e && e.stack ? e.stack : String(e)}`);
+    return 3;
   }
+}
 
-  const [inputDir, outputDir] = args;
+async function runOptimizeInner(inputDir, outputDir, opts) {
   if (!inputDir || !outputDir) {
     console.error('optipack: both <inputPackDir> and <outputPackDir> are required');
     return 1;
@@ -84,7 +69,6 @@ export async function main(argv) {
     return 1;
   }
 
-  // CLI overrides.
   const cli = {
     level: opts.level,
     only: opts.only,
@@ -122,7 +106,7 @@ export async function main(argv) {
       if (opts.report !== undefined) {
         fs.mkdirSync(path.dirname(reportPath), { recursive: true });
         fs.writeFileSync(reportPath, json);
-        console.log(`optipack: dry run — wrote report to ${reportPath} (no pack files written)`);
+        console.log(`optipack: dry run â€” wrote report to ${reportPath} (no pack files written)`);
       } else {
         console.log(json);
       }
@@ -144,7 +128,6 @@ export async function main(argv) {
       }
     }
 
-    // Human summary on success (only when not printing the full report).
     if (!dryRun || opts.report !== undefined) {
       const t = report.totals;
       console.log(
@@ -156,25 +139,107 @@ export async function main(argv) {
     return 0;
   } catch (e) {
     if (e instanceof ParseFailureError) {
-      console.error(`optipack: parse failure — ${e.message}`);
+      console.error(`optipack: parse failure â€” ${e.message}`);
       return 2;
     }
     if (e instanceof InternalError) {
-      console.error(`optipack: internal error — ${e.message}`);
+      console.error(`optipack: internal error â€” ${e.message}`);
       return 3;
     }
     if (e && e.code === 1) {
       console.error(`optipack: ${e.message}`);
       return 1;
     }
-    console.error(`optipack: internal error — ${e && e.stack ? e.stack : String(e)}`);
+    console.error(`optipack: internal error â€” ${e && e.stack ? e.stack : String(e)}`);
     return 3;
   }
 }
 
-function parseBoolOpt(v) {
-  if (v === 'true' || v === '' || v === undefined) return true;
-  if (v === 'false') return false;
-  // Signal an invalid value; validated by the caller.
-  return v;
+async function runBench(packDir, opts) {
+  const run = async () => {
+    const { benchPack } = await import('./bench.js');
+    const result = await benchPack(packDir, {
+      ticks: opts.ticks,
+      entry: opts.entry,
+      scenario: opts.scenario,
+      config: opts.config && JSON.parse(fs.readFileSync(opts.config, 'utf8').replace(/^\uFEFF/, '')),
+      level: opts.level,
+    });
+    if (opts.json) {
+      fs.mkdirSync(path.dirname(opts.json), { recursive: true });
+      fs.writeFileSync(opts.json, JSON.stringify(result, null, 2) + '\n');
+      console.log(`optipack bench: JSON written to ${opts.json}`);
+    }
+    return result.effectsIdentical ? 0 : 1;
+  };
+  try {
+    const code = await run();
+    process.exitCode = code;
+    return code;
+  } catch (e) {
+    const code = e instanceof ParseFailureError ? 2
+      : e instanceof InternalError ? 3
+        : 1;
+    console.error(`optipack bench: ${e instanceof ParseFailureError || e instanceof InternalError ? e.message : (e && e.message ? e.message : String(e))}`);
+    process.exitCode = code;
+    return code;
+  }
+}
+
+export async function main(argv) {
+  const program = new Command();
+  program
+    .name('optipack')
+    .description('QuickJS-targeted micro-optimizing pre-processor for Minecraft Bedrock behavior-pack scripts')
+    .version('1.0.0')
+    .exitOverride()
+    .configureOutput({ writeErr: () => {} }); // actions print errors themselves
+
+  program
+    .command('bench')
+    .description('A/B benchmark: original vs optimized scripts under the harness mock (boundary crossings + indicative wall time). See BENCHMARKING.md for the in-game workflow.')
+    .argument('<inputPackDir>', 'behavior pack directory to benchmark')
+    .option('--ticks <n>', 'simulated ticks to run (default 200)', parseOptInt)
+    .option('--entry <path>', 'script entry to load (default: manifest script entry)')
+    .option('--scenario <path>', 'scenario JSON (reads/state/steps) driving events between ticks')
+    .option('--json <path>', 'also write the bench result as JSON to this path')
+    .option('--level <level>', 'optimization level for the optimized build')
+    .option('--config <path>', 'config file for the optimized build')
+    .action(function (packDir, cmdOpts, command) {
+      // --level is declared on both this subcommand and the default command;
+      // Commander absorbs shadowed names into the parent scope, so merge.
+      return runBench(packDir, command.optsWithGlobals());
+    });
+
+  program
+    .argument('<inputPackDir>', 'behavior pack directory to read')
+    .argument('<outputPackDir>', 'directory to write the optimized pack into')
+    .option('--level <level>', 'optimization level: safe | balanced | risky')
+    .option('--config <path>', 'config file (default: ./optipack.config.json when present)')
+    .option('--only <ids>', 'comma-separated transform ids to run exclusively')
+    .option('--except <ids>', 'comma-separated transform ids to skip')
+    .option('--dry-run', 'analyze + report, write nothing (prints report to stdout unless --report is given)')
+    .option('--diff', 'print unified diffs per changed file')
+    .option('--report <path>', 'report file (default: <outputPackDir>/optipack-report.json)')
+    .option('--lint <bool>', 'enable/disable the lint pass (true|false)', parseBoolOpt)
+    .action((inputDir, outputDir) => runOptimize(inputDir, outputDir, program.opts()));
+
+  try {
+    await program.parseAsync(argv, { from: 'node' });
+  } catch (e) {
+    if (e && e.code === 'commander.version') {
+      console.log(e.message);
+      return 0;
+    }
+    if (e && (e.code === 'commander.help' || e.code === 'commander.helpDisplayed')) {
+      return 0;
+    }
+    if (e && (e.code === 'commander.missingArgument' || e.code === 'commander.missingSubcommandArgument')) {
+      console.error(`optipack: ${e.message}`);
+      return 1;
+    }
+    console.error(`optipack: ${e && e.message ? e.message : String(e)}`);
+    return 1;
+  }
+  return process.exitCode ?? 0;
 }

@@ -41,14 +41,19 @@ const NON_VALUE_SYMBOLS = new Set([
 ]);
 
 export function permissive(label) {
+  const asPrimitive = (hint) => (hint === 'number' ? 0 : label);
   const fn = function (...args) {
     record('stub.call', { target: label, args: shallow(args) });
     return permissive(label + '()');
   };
-  Object.defineProperty(fn, 'name', { value: label, configurable: true });
+  fn.toString = () => label;
+  fn.valueOf = () => label;
   return new Proxy(fn, {
-    get(target, prop) {
-      if (typeof prop === 'symbol' || NON_VALUE_SYMBOLS.has(prop)) return undefined;
+    get(target, prop, receiver) {
+      if (prop === Symbol.toPrimitive) return asPrimitive;
+      if (typeof prop === 'symbol') return undefined;
+      if (prop === 'then' || prop === 'catch' || prop === 'finally' || prop === 'toJSON') return undefined;
+      if (prop === 'toString' || prop === 'valueOf') return Reflect.get(target, prop, receiver);
       return permissive(label + '.' + String(prop));
     },
     construct(target, args) {

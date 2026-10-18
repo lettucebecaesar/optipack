@@ -13,7 +13,9 @@
     "main":  "src/pipeline.js",
     "scripts":  {
                     "test":  "node --test \"test/*.test.mjs\"",
-                    "update-snapshot":  "node test/update-example-snapshot.mjs"
+                    "update-snapshot":  "node test/update-example-snapshot.mjs",
+                    "fetch-corpus":  "node test/fetch-corpus.mjs",
+                    "update-mock-stubs":  "node test/update-mock-stubs.mjs"
                 },
     "dependencies":  {
                          "@babel/generator":  "^7.26.0",

@@ -18,12 +18,15 @@ import os from 'node:os';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-if (!globalThis.__opkHooksRegistered) {
-  register(
-    pathToFileURL(path.join(here, '..', 'loader-hooks.mjs')).href,
-    pathToFileURL(path.join(here, 'setup.js')).href
-  );
-  globalThis.__opkHooksRegistered = true;
+/** Register the ESM loader hooks (idempotent). Only needed for variant loading. */
+export function ensureHooks() {
+  if (!globalThis.__opkHooksRegistered) {
+    register(
+      pathToFileURL(path.join(here, 'loader-hooks.mjs')).href,
+      pathToFileURL(path.join(here, 'driver.js')).href
+    );
+    globalThis.__opkHooksRegistered = true;
+  }
 }
 
 export function makeRecorder({ reads = {}, state = {} } = {}) {
@@ -37,6 +40,10 @@ export function makeRecorder({ reads = {}, state = {} } = {}) {
     readIdx: {},
     state,
     tickCounter: 0,
+    counters: {},
+  };
+  r.count = (kind, n = 1) => {
+    r.counters[kind] = (r.counters[kind] || 0) + n;
   };
   r.effect = (call, args) => {
     r.effects.push({ call, args });
@@ -105,7 +112,7 @@ export function makeRecorder({ reads = {}, state = {} } = {}) {
   return r;
 }
 
-/** Recursively replace {__entity: id} markers in a payload with live entities. */
+/** Recursively replace {__entity}/{__dimension}/{__block} markers in a payload with live mock objects. */
 function hydrate(value, rec) {
   if (globalThis.__opkEnsurePlayers) globalThis.__opkEnsurePlayers(rec);
   if (value === null || typeof value !== 'object') return value;
@@ -114,6 +121,14 @@ function hydrate(value, rec) {
     const players = rec._players || [];
     const found = players.find((p) => p.id === value.__entity);
     return found || value;
+  }
+  if (typeof value.__dimension === 'string') {
+    if (!globalThis.__opkMakeDimension) throw new Error('hydrate __dimension: server mock not loaded');
+    return globalThis.__opkMakeDimension(value.__dimension);
+  }
+  if (value.__block) {
+    if (!globalThis.__opkMakeBlock) throw new Error('hydrate __block: server mock not loaded');
+    return globalThis.__opkMakeBlock(hydrate(value.__block.location, rec), value.__block.dimension);
   }
   const out = {};
   for (const k of Object.keys(value)) out[k] = hydrate(value[k], rec);
@@ -125,6 +140,7 @@ function hydrate(value, rec) {
  * Steps: {op:'tick', n}, {op:'fire', event, payload}, {op:'call', fn(rec)}
  */
 export async function runVariant(entryUrl, variant, { reads, state, steps = [] }) {
+  ensureHooks();
   const rec = makeRecorder({ reads, state });
   globalThis.__opkRecorder = rec;
   try {
@@ -132,7 +148,9 @@ export async function runVariant(entryUrl, variant, { reads, state, steps = [] }
     for (const step of steps) {
       if (step.op === 'tick') rec.tick(step.n);
       else if (step.op === 'fire') rec.fire(step.event, step.payload);
-      else if (step.op === 'call') step.fn(rec);
+      else if (step.op === 'fireMany') {
+        for (let i = 0; i < (step.count || 1); i++) rec.fire(step.event, step.payload);
+      } else if (step.op === 'call') step.fn(rec);
     }
   } finally {
     globalThis.__opkRecorder = null;
@@ -164,8 +182,8 @@ export function assertSameEffects(a, b, label = '') {
  * the original and optimized file paths.
  */
 export async function buildVariantPack(files, config, testSuffix) {
-  const { normalizeConfig } = await import('../../src/config.js');
-  const { runPack } = await import('../../src/pipeline.js');
+  const { normalizeConfig } = await import('../config.js');
+  const { runPack } = await import('../pipeline.js');
   const inputDir = fs.mkdtempSync(path.join(os.tmpdir(), `optipack-${testSuffix}-in-`));
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), `optipack-${testSuffix}-out-`));
   for (const [relPath, content] of Object.entries(files)) {

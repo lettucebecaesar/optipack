@@ -241,6 +241,16 @@ test('CLI: --level safe skips balanced passes', () => {
   assert.ok(safeCode.includes('player.location.x'), 'B1 did not run at safe level');
 });
 
+test('CLI: bench reports boundary crossings and identical effects', () => {
+  // Use the example pack with the server-ui-forms scenario (players p1 ready).
+  const scenarioPath = path.join(root, 'test', 'server-ui-forms', 'scenario.json');
+  const res = spawnSync(process.execPath, [CLI, 'bench', path.join(root, 'example'), '--ticks', '40', '--scenario', scenarioPath], { encoding: 'utf8' });
+  assert.equal(res.status, 0, res.stderr);
+  assert.match(res.stdout, /boundary\.location/, 'crossing table present');
+  assert.match(res.stdout, /transforms applied: \d+/, 'transform count present');
+  assert.match(res.stdout, /original/, 'A/B columns present');
+});
+
 test('CLI: risky passes only run at risky level or explicit config', () => {
   const src = [
     "import { world, system } from '@minecraft/server';",

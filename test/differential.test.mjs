@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Bespoke differential scenarios.
  *
  * Every scenario loads the original and optimized entry with the mock
@@ -8,7 +8,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { differentialCheck, runVariant, pathToUrl, buildVariantPack } from './harness/setup.js';
+import { differentialCheck, runVariant, pathToUrl, buildVariantPack } from '../src/harness/driver.js';
 
 const PLAYER_READS = {
   'location:p1': [{ x: 1, y: 64, z: 2 }, { x: 2, y: 65, z: 3 }],

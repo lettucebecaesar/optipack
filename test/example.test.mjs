@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Example pack end-to-end: run the CLI over example/, verify parse validity,
  * manifest fidelity, effects-equivalence across the whole script graph, report
  * snapshot, and determinism.
@@ -57,7 +57,7 @@ test('example: effects-equivalence across the whole script graph', async () => {
   const res = spawnSync(process.execPath, [CLI, EXAMPLE, out], { encoding: 'utf8' });
   assert.equal(res.status, 0, res.stderr);
 
-  const { runVariant, assertSameEffects, pathToUrl } = await import('./harness/setup.js');
+  const { runVariant, assertSameEffects, pathToUrl } = await import('../src/harness/driver.js');
   const scenario = {
     reads: {
       'location:p1': [{ x: 10, y: 64, z: 20 }, { x: 12, y: 65, z: 22 }],
@@ -100,7 +100,7 @@ test('example: report snapshot is stable', () => {
   assert.deepEqual(got, expected, 'report matches snapshot');
 });
 
-test('example: deterministic output — two runs are byte-identical', () => {
+test('example: deterministic output â€” two runs are byte-identical', () => {
   const out1 = mkOut('optipack-det1-');
   const out2 = mkOut('optipack-det2-');
   spawnSync(process.execPath, [CLI, EXAMPLE, out1], { encoding: 'utf8' });

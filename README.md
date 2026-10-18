@@ -35,6 +35,20 @@ Exit codes: `0` success · `1` usage/config error · `2` parse failure (file + l
 
 Every output file is re-parsed with `@babel/parser` (ESM) before being written; a round-trip failure aborts the build with exit code 3.
 
+### Benchmarks
+
+```bash
+optipack bench <packDir> [--ticks N] [--scenario file.json] [--level <level>] [--json out.json]
+```
+
+Runs the original and optimized scripts side by side under the harness mock for
+N simulated ticks and reports host-boundary crossings by kind (engine-independent),
+indicative wall time, and effect-trace equality (a non-equivalent build fails the
+bench). Works on any behavior pack; a corpus of real MIT-licensed community
+scripts is available via `npm run fetch-corpus`. See **BENCHMARKING.md** for the
+full guide, including the in-game `/script profiler` A/B workflow for
+authoritative QuickJS numbers.
+
 ## Config file
 
 `optipack.config.json` (CLI flags override it):

@@ -1,8 +1,8 @@
-/**
+﻿/**
  * Per-transform unit tests: every test/<transformId>/ fixture runs through the
  * full pipeline, compares exact output against expected.js (or expects the
- * input unchanged), asserts report expectations, and — when scenario.json is
- * present — checks effects-equivalence between the original and optimized
+ * input unchanged), asserts report expectations, and â€” when scenario.json is
+ * present â€” checks effects-equivalence between the original and optimized
  * code against the mock @minecraft/server.
  */
 import test from 'node:test';
@@ -14,7 +14,7 @@ import fs from 'node:fs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 const { runFixtureDir, fixtureDirs } = await import('./harness/fixture.js');
-const { differentialCheck } = await import('./harness/setup.js');
+const { differentialCheck } = await import('../src/harness/driver.js');
 
 const dirs = fixtureDirs(here);
 
