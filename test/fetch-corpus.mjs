@@ -57,7 +57,7 @@ const commit = execSync(`git ls-remote https://github.com/${repo}.git HEAD`, { e
 
 // 2. Assemble the corpus pack.
 const packDir = path.join(corpusDir, 'jayly-pack');
-fs.rmSync(corpusDir, { recursive: true, force: true });
+fs.rmSync(packDir, { recursive: true, force: true });
 fs.mkdirSync(path.join(packDir, 'scripts'), { recursive: true });
 fs.cpSync(path.join(tmp, 'x', extracted, 'scripts'), path.join(packDir, 'scripts'), { recursive: true });
 fs.writeFileSync(path.join(packDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
@@ -71,7 +71,34 @@ const entry = [
 ].join('\n');
 fs.writeFileSync(path.join(packDir, 'scripts', 'main.js'), entry);
 
-// 3. Record provenance.
+// 3. Scenario: exercise anti-nuker's break-event handler + tick intervals.
+const scenario = {
+  reads: {
+    'name:p1': ['Alex'],
+    'location:p1': [{ x: 10, y: 64, z: 20 }, { x: 11, y: 64, z: 21 }],
+    'tag:p1:anti_shockwave': [false],
+    'entitiesAt:minecraft:overworld': [[]],
+  },
+  state: { players: [{ id: 'p1' }, { id: 'p2' }] },
+  steps: [
+    { op: 'fire', event: 'world.afterEvents.worldLoad', payload: {} },
+    {
+      op: 'fireMany',
+      event: 'world.afterEvents.playerBreakBlock',
+      count: 30,
+      payload: {
+        block: { __block: { location: { x: 100, y: 64, z: 100 }, dimension: 'minecraft:overworld' } },
+        brokenBlockPermutation: { type: 'minecraft:stone' },
+        dimension: { __dimension: 'minecraft:overworld' },
+        player: { __entity: 'p1' },
+      },
+    },
+    { op: 'tick', n: 0 },
+  ],
+};
+fs.writeFileSync(path.join(corpusDir, 'jayly-scenario.json'), JSON.stringify(scenario, null, 2) + '\n');
+
+// 4. Record provenance.
 fs.writeFileSync(
   path.join(corpusDir, 'SOURCES.json'),
   JSON.stringify({
