@@ -173,6 +173,18 @@ This catches real bugs: during development the harness caught a missing filter a
 
 The example pack (`example/`) is run through the CLI by the suite: parse validity, manifest fidelity, effects-equivalence over a scripted worldLoad/tick/playerSpawn scenario, a stable report snapshot, and byte-identical determinism across runs.
 
+### Mocked `@minecraft/*` runtime modules
+
+The harness resolves every `@minecraft/*` runtime module to a harness mock (a pack script importing them in tests never touches the real engine packages). Coverage matches the npm-published runtime modules:
+
+| Module | Mock depth |
+| --- | --- |
+| `@minecraft/server` | Functional: entities, dimensions, events, effects recorder, scripted reads |
+| `@minecraft/server-ui` | Functional: `ActionFormData` / `MessageFormData` / `ModalFormData` chainable builders, `uiManager.showPlayer`, response types, `FormCancelationReason`; `.show()`/`showPlayer()` record `ui.show` effects and resolve with scripted responses (recorder key `uiResponse:<entityId>`) |
+| `@minecraft/common`, `@minecraft/debug-utilities`, `@minecraft/diagnostics`, `@minecraft/server-admin`, `@minecraft/server-editor`, `@minecraft/server-gametest`, `@minecraft/server-graphics`, `@minecraft/server-net` | Permissive stubs generated from each module's real `index.d.ts` (`test/update-mock-stubs.mjs`): every runtime export is callable/constructable/chainable and records `stub.call`/`stub.new` effects |
+
+Permissive stubs are not behavioral models — they exist so fixtures importing these modules link and run; behavior is identical on both sides of a differential comparison, which is the only claim they support. Anything importing a `@minecraft/*` name outside the table above (e.g. tooling packages like `@minecraft/vanilla-data`) falls through to normal resolution.
+
 For R1 specifically, the harness documents the precise guarantee: with a *stable* component value, effects match exactly. When a component's value changes across ticks, R1's stale-cache failure mode becomes observable — that is the documented risk you accept by opting in.
 
 ## Not implemented (explicitly)
@@ -193,6 +205,7 @@ Platform reference: <https://wiki.bedrock.dev/scripting/introduction-to-scriptin
 ## Limitations
 
 - Same-file analysis only (no cross-file call graph, no type checking).
+- All `@minecraft/*` modules are external and never rewritten — that includes the ten runtime modules the engine provides (`@minecraft/server`, `@minecraft/server-ui`, `@minecraft/server-graphics`, `@minecraft/common`, `@minecraft/server-gametest`, `@minecraft/server-admin`, `@minecraft/server-net`, `@minecraft/debug-utilities`, `@minecraft/diagnostics`, `@minecraft/server-editor`) and the npm-bundled libraries (`@minecraft/math`, `@minecraft/gameplay-utilities`). Packs depending on the npm libraries still need their own bundling step before optipack.
 - The tool assumes dense arrays for S5's method inlining (true for all Script API arrays and typical JS; a pathological sparse array would change forEach/map/some/every/find/filter semantics — receivers with statically holey provenance bail instead).
 - The S7 before-loop hoist evaluates the chain once per loop entry even if the body runs zero times; for live host objects these reads are side-effect-free, but a null root combined with a zero-iteration loop would newly throw.
 - Comments are preserved (license headers survive), but formatting is normalized by the generator; byte-identical output is guaranteed only for identical input + config.

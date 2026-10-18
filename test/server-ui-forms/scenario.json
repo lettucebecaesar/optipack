@@ -1,0 +1,1 @@
+{"entry": "scripts/input.js", "reads": {"location:p1": [{"x": 1, "y": 70, "z": 2}, {"x": 2, "y": 60, "z": 3}]}, "state": {"players": [{"id": "p1"}]}, "steps": [{"op": "fire", "event": "world.afterEvents.worldLoad", "payload": {}}, {"op": "tick", "n": 10}]}
