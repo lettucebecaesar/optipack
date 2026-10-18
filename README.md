@@ -13,13 +13,15 @@ optipack MyPack MyPack-optimized
 
 Host-boundary crossings before → after (engine-independent: identical in Node and in-game), with behavior verified identical by the test harness:
 
-| Benchmark | Level | Crossings | Top reduction |
+| Benchmark | Level | Crossings | Top reductions |
 |---|---|---|---|
-| [example pack](example/) (300 ticks) | balanced | 237 → **177** (−25%) | `location` reads −50% |
-| [JaylyDev/ScriptAPI](https://github.com/JaylyDev/ScriptAPI) corpus, 147 real scripts | balanced | 655 → 655 (0%)¹ | — |
-| same corpus | risky | 655 → **447** (−32%) | `getComponent` −49%, `location` −50% |
+| [example pack](example/) (300 ticks) | balanced | 237 → **177** (−25%) | `location` −50% |
+| [JaylyDev/ScriptAPI](https://github.com/JaylyDev/ScriptAPI) corpus — 147 real community scripts (600 ticks) | balanced | 3780 → 3780 (0%)¹ | — |
+| same corpus | risky | 3780 → **2522** (−33%) | `getComponent` −50%, `location` −50% |
 
-¹ *Honest number: this corpus's hot paths are call-dominated (`getComponent` every tick) — caching those is exactly the opt-in risky tier. Safe transforms only ever remove reads.*
+¹ *Honest number: this corpus's hot paths are call-dominated (`getComponent` every tick) — caching those is exactly what the opt-in risky tier does. Safe transforms only ever remove reads.*
+
+The corpus risky run applied **97 transforms across 50 of 147 files** and recorded **142 proven-unsafe sites it declined** (line + reason each) with **16 risky-site warnings** — nothing silently skipped.
 
 Reproduce with `optipack bench` (see [BENCHMARKING.md](BENCHMARKING.md)), which also covers the in-game `/script profiler` A/B workflow for authoritative QuickJS numbers.
 
