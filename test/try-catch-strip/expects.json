@@ -1,0 +1,1 @@
+{"transforms": {"try-catch-strip": 1}, "warnings": 2, "bails": [{"transform": "R3", "reasonContains": "catch body"}]}

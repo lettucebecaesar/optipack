@@ -1,0 +1,27 @@
+﻿{
+  "format_version": 2,
+  "header": {
+    "name": "optipack example pack",
+    "description": "Tiny behavior pack exercising tick loops, event handlers, a runJob generator and dynamic properties. Used by the optipack test suite.",
+    "uuid": "6f2a1c8e-3d44-4b0a-9d21-77aa01bb2f01",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "9c1b3f60-8e2d-4c6a-b1e4-52dd03cc2f02",
+      "version": [1, 0, 0]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "b7d4e2a0-5f31-4a88-8c70-63ee04dd2f03",
+      "entry": "scripts/main.js",
+      "version": [1, 0, 0]
+    }
+  ],
+  "dependencies": [
+    { "module_name": "@minecraft/server", "version": "2.0.0" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+    "warnings":  3,
+    "transforms":  {
+                       "cross-tick-cache":  3
+                   }
+}

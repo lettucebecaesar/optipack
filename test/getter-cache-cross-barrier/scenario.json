@@ -1,0 +1,28 @@
+{
+    "reads":  {
+                  "location:p1":  [
+                                      {
+                                          "y":  64,
+                                          "z":  2,
+                                          "x":  1
+                                      }
+                                  ]
+              },
+    "entry":  "scripts/input.js",
+    "steps":  [
+                  {
+                      "n":  5,
+                      "op":  "tick"
+                  }
+              ],
+    "state":  {
+                  "players":  [
+                                  {
+                                      "id":  "p1"
+                                  },
+                                  {
+                                      "id":  "p2"
+                                  }
+                              ]
+              }
+}

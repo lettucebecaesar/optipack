@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "destructure-to-direct":  0
+                   },
+    "bails":  [
+                  {
+                      "transform":  "S6",
+                      "reasonContains":  "nested pattern"
+                  }
+              ]
+}

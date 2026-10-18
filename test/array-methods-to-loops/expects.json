@@ -1,0 +1,6 @@
+{
+    "hotFunctions":  1,
+    "transforms":  {
+                       "array-methods-to-loops":  6
+                   }
+}

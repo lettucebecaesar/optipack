@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "cache-getter-chains":  2
+                   },
+    "bails":  [
+                  {
+                      "transform":  "B1",
+                      "reasonContains":  "split by call/assignment barriers"
+                  }
+              ]
+}

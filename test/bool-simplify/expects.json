@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "bool-simplify":  4
+                   },
+    "bails":  [
+                  {
+                      "transform":  "S3",
+                      "reasonContains":  "not statically boolean"
+                  }
+              ]
+}

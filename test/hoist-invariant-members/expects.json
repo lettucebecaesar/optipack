@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "hoist-invariant-members":  2
+                   },
+    "bails":  [
+                  {
+                      "transform":  "S7",
+                      "reasonContains":  "mutation barrier"
+                  }
+              ]
+}

@@ -1,0 +1,1 @@
+{"transforms": {"closure-lift": 6}, "bails": [{"transform": "B2", "reasonContains": "escapes as a value"}, {"transform": "B2", "reasonContains": "reassigned"}]}

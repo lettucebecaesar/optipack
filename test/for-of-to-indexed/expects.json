@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "for-of-to-indexed":  4
+                   },
+    "bails":  [
+                  {
+                      "transform":  "S4",
+                      "reasonContains":  "not provably an array"
+                  }
+              ]
+}

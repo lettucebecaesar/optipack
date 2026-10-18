@@ -1,0 +1,107 @@
+{
+  "level": "balanced",
+  "files": [
+    {
+      "path": "scripts/drops.js",
+      "hotFunctions": 0,
+      "transforms": {},
+      "bails": [],
+      "lint": [],
+      "residualAllocs": {
+        "closures": 0,
+        "arrays": 0,
+        "objects": 0
+      },
+      "bytes": {
+        "before": 710,
+        "after": 709
+      },
+      "warnings": 0
+    },
+    {
+      "path": "scripts/main.js",
+      "hotFunctions": 4,
+      "transforms": {
+        "for-of-to-indexed": 1,
+        "array-methods-to-loops": 1,
+        "hoist-invariant-members": 1,
+        "cache-getter-chains": 1,
+        "string-build": 1
+      },
+      "bails": [
+        {
+          "line": 18,
+          "transform": "S4",
+          "reason": "iterable not provably an array"
+        },
+        {
+          "line": 18,
+          "transform": "S6",
+          "reason": "declaration is a loop head"
+        },
+        {
+          "line": 48,
+          "transform": "S7",
+          "reason": "loop body contains calls (mutation barrier)"
+        },
+        {
+          "line": 20,
+          "transform": "B1",
+          "reason": "chain .location.y repeats but uses are split by call/assignment barriers"
+        },
+        {
+          "line": 48,
+          "transform": "B4",
+          "reason": "loop contains await/yield"
+        }
+      ],
+      "lint": [
+        {
+          "line": 16,
+          "rule": "per-tick-getAllPlayers",
+          "message": "getAllPlayers() runs unconditionally inside a per-tick callback — prefer event-driven updates or caching between ticks"
+        },
+        {
+          "line": 49,
+          "rule": "dynprop-in-loop",
+          "message": "getDynamicProperty inside a tick loop — reads cross the host boundary every iteration"
+        }
+      ],
+      "residualAllocs": {
+        "closures": 0,
+        "arrays": 1,
+        "objects": 0
+      },
+      "bytes": {
+        "before": 2217,
+        "after": 2523
+      },
+      "warnings": 0
+    },
+    {
+      "path": "scripts/util.js",
+      "hotFunctions": 0,
+      "transforms": {
+        "bool-simplify": 1
+      },
+      "bails": [],
+      "lint": [],
+      "residualAllocs": {
+        "closures": 0,
+        "arrays": 0,
+        "objects": 0
+      },
+      "bytes": {
+        "before": 820,
+        "after": 807
+      },
+      "warnings": 0
+    }
+  ],
+  "warnings": [],
+  "totals": {
+    "transforms": 6,
+    "bails": 5,
+    "warnings": 0
+  }
+}

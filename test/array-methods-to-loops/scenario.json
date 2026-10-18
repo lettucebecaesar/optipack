@@ -1,0 +1,22 @@
+{
+    "reads":  {
+
+              },
+    "entry":  "scripts/input.js",
+    "steps":  [
+                  {
+                      "n":  5,
+                      "op":  "tick"
+                  }
+              ],
+    "state":  {
+                  "players":  [
+                                  {
+                                      "id":  "p1"
+                                  },
+                                  {
+                                      "id":  "p2"
+                                  }
+                              ]
+              }
+}

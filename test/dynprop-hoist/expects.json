@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "dynprop-hoist":  1
+                   },
+    "bails":  [
+                  {
+                      "transform":  "B4",
+                      "reasonContains":  "calls other than"
+                  }
+              ]
+}

@@ -1,0 +1,11 @@
+{
+    "transforms":  {
+                       "destructure-to-direct":  2
+                   },
+    "bails":  [
+                  {
+                      "transform":  "S6",
+                      "reasonContains":  "total uses"
+                  }
+              ]
+}

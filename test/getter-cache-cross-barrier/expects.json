@@ -1,0 +1,6 @@
+{
+    "warnings":  1,
+    "transforms":  {
+                       "getter-cache-cross-barrier":  1
+                   }
+}

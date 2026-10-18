@@ -1,0 +1,12 @@
+{
+    "bails":  [
+                  {
+                      "transform":  "R2",
+                      "reasonContains":  "property of the parsed object is written"
+                  }
+              ],
+    "warnings":  1,
+    "transforms":  {
+                       "json-fold":  1
+                   }
+}
